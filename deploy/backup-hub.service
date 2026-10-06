@@ -1,0 +1,19 @@
+[Unit]
+Description=Backup Hub (dashboard per i backup rclone)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# root: serve la config rclone (/root/.config/rclone) e la chiave SSH (/root/.ssh)
+User=root
+WorkingDirectory=/opt/backup-hub
+EnvironmentFile=-/etc/backup-hub/env
+Environment=BACKUP_HUB_CONFIG=/etc/backup-hub/config.yml
+ExecStart=/opt/backup-hub/.venv/bin/python -m app
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

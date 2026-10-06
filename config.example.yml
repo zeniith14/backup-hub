@@ -1,0 +1,55 @@
+# Backup Hub — configurazione di esempio.
+# Copia in /etc/backup-hub/config.yml e adatta.
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+# Password della dashboard (utente qualsiasi, es. "admin").
+# Meglio impostarla con la variabile d'ambiente BACKUP_HUB_PASSWORD.
+auth:
+  password: "cambiami"
+
+data_dir: /var/lib/backup-hub        # database dello storico + log
+timezone: Europe/Rome
+schedule: "30 3 * * *"               # cron: ogni notte alle 03:30 (modificabile dalla dashboard)
+schedule_enabled: true
+keep_runs: 500                       # quante esecuzioni tenere nello storico
+
+rclone:
+  binary: rclone
+  flags:                             # limiti per non farsi bloccare dalle quote di Google Drive
+    - --tpslimit
+    - "4"
+    - --drive-pacer-min-sleep
+    - 200ms
+    - --transfers
+    - "2"
+    - --checkers
+    - "4"
+
+# Notifiche (tutte opzionali). Di default avvisa solo quando un backup FALLISCE.
+notify:
+  # ntfy_url: https://ntfy.sh/il-mio-topic-segreto
+  # telegram_token: "123456:ABC..."
+  # telegram_chat_id: "123456789"
+  # webhook_url: https://example.com/hook
+  on_success: false
+
+jobs:
+  - name: immich
+    label: Immich (foto e video)
+    source: vm101:/mnt/immich-library
+    dest: gdrive-crypt:immich
+    mode: sync                       # sync = specchio; copy = non cancella mai nulla sulla destinazione
+    max_delete: 100                  # se dovesse cancellare più di 100 file, rclone si ferma
+    excludes:
+      - "thumbs/**"                  # rigenerabili da Immich
+      - "encoded-video/**"
+
+  - name: opencloud
+    label: OpenCloud (file)
+    source: vm103:/mnt/cloud/opencloud/data
+    dest: gdrive-crypt:opencloud
+    mode: sync
+    max_delete: 100
